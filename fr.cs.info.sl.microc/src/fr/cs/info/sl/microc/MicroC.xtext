@@ -1,0 +1,346 @@
+grammar fr.cs.info.sl.microc.MicroC hidden(WS, ML_COMMENT, SL_COMMENT)
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+generate microC "http://www.cs.fr/info/sl/microc/MicroC"
+
+Model:
+	decls+=Decl*;
+
+Decl:
+	C_include | C_function | LogicDeclaration
+;
+
+C_include:
+	"#include" "<" fileName=STRING ">"
+;
+
+C_function:
+	type=ReturnType name=ID "(" (params+=Param ("," params+=Param)*)? ")"
+	'{' specs+=Spec* body+=Statement* '}'
+;
+
+ReturnType:
+	name=("void" | "int")
+;
+
+Param:
+	"int" name=ID (isArray?="[]")?
+;
+
+Spec:
+	"//@" (Requires | Ensures | Variant) ";"
+;
+
+Requires:
+	"requires" term=Term
+;
+
+Ensures:
+	"ensures" term=Term
+;
+
+Variant:
+	"variant" terms+=Term ("," terms+=Term)*
+;
+
+Block:
+	{Block} "{" statements+=Statement* "}"
+;
+
+Statement:
+	PrimaryStatement | Block
+;
+
+PrimaryStatement:
+	SimpleStatement | ComplexStatement
+;
+
+SimpleStatement:
+	Nop | Return | VarDecl | Break
+  | ExprAsStatement | Label | LogicStatement
+;
+
+ExprAsStatement:
+	statement=ExprStatement ';'
+;
+
+ComplexStatement:
+  IfThenElse | While | For
+;
+
+Nop:
+	name=";"
+;
+
+Return:
+	"return" expression=Expr ";"
+;
+
+VarDecl:
+	"int" name=ID (isArray?="[" size=Expr "]")? ";"
+;
+
+Break:
+	name="break" ";"
+;
+
+IfThenElse:
+	"if" "(" condition=Expr ")" 
+	  ( truebranch=ComplexStatement
+	  | truebranch=(SimpleStatement | Block) ("else" falsebranch=Statement)?
+	  )
+;
+
+While:
+	"while" "(" condition=Expr ")" body=LoopBody
+;
+
+For:
+	"for" "(" init=ExprStatement? ";"
+	          condition=Expr? ";"
+	          postaction=ExprStatement? ")"
+	body=LoopBody
+;
+
+Label:
+	"//@" "label" name=ID ";"
+;
+
+LogicStatement:
+	"//@" (Assert | Assume | Check) ";"
+;
+
+Assert:
+	"assert" term=Term
+;
+
+Assume:
+	"assume" term=Term
+;
+
+Check:
+	"check" term=Term
+;
+
+ExprStatement:
+	VarInit | VarAssign | FunCall | Scanf
+;
+
+VarInit:
+	"int" name=ID "=" initvalue=Expr
+;
+
+VarAssign:
+	pre=IncOp var=VarRef
+  | var=VarRef (post=IncOp | operator=AssignOp assignedvalue=Expr)
+;
+
+IncOp:
+	'++' | '--'
+;
+
+AssignOp:
+	"=" | "+=" | "-=" | "*=" | "/="
+;
+
+FunCall:
+	name=ID "(" (params+=Expr ("," params+=Expr)*)? ")"
+;
+
+Scanf:
+	"scanf" "(" "\"%d\"" "," "&" variable=ID ")"
+;
+
+LoopBody:
+	annotations+=LoopAnnot* statements+=PrimaryStatement
+  | {LoopBody} "{" annotations+=LoopAnnot* statements+=Statement* "}"
+;
+
+LoopAnnot:
+	"//@" (Invariant | Variant) ";"
+;
+
+Invariant:
+	"invariant" term=Term
+;
+
+Expr:
+	BinLog
+;
+
+BinLog:
+	BinComp
+	({BinLog.left=current} operator=("&&" | "||") right=BinComp)?
+;
+
+BinComp:
+	BinAdd
+	({BinComp.left=current} operator=("==" | "!=" | "<" | "<=" | ">" | ">=") right=BinAdd)?
+;
+
+BinAdd:
+	BinProd
+	({BinAdd.left=current} operator=("+" | "-") right=BinProd)?
+;
+
+BinProd:
+	Primary
+	({BinProd.left=current} operator=("*" | "/" | "%") right=Primary)?
+;
+
+Primary:
+	Minus | Not | Quark
+;
+
+Minus:
+	"-" expr=Quark
+;
+
+Not:
+	"!" expr=Quark
+;
+
+Quark:
+	IntLiteral | StringLiteral | VarRef
+  | FunCall | Scanf | ParenExpr
+;
+
+ParenExpr:
+	"(" expr=Expr ")"
+;
+
+IntLiteral:
+	intvalue=INT
+;
+
+StringLiteral:
+	string=STRING
+;
+
+VarRef:
+	name=ID ("[" index=Expr "]")?
+;
+
+LogicDeclaration:
+	"//@" (LogicFunctionDecl | PredicateDecl | Axiom | Lemma | Goal) ";"
+;
+
+LogicFunctionDecl:
+	"function" "int" name=ID "(" (params+=Param ("," params+=Param)*)? ")" ("=" definition=Term)?
+;
+
+PredicateDecl:
+	"predicate" name=ID "(" (params+=Param ("," params+=Param)*)? ")" ("=" definition=Term)?
+;
+
+Axiom:
+	"axiom" name=ID ":" term=Term
+;
+
+Lemma:
+	"lemma" name=ID ":" term=Term
+;
+
+Goal:
+	"goal" name=ID ":" term=Term
+;
+
+Term:
+    ComplexTerm
+;
+
+ComplexTerm :
+	IfThenElseTerm | LetTerm | BindTerm | LogicTerm
+;
+
+IfThenElseTerm:
+	"if" condition=Term "then" truebranch=Term "else" falsebranch=Term
+;
+
+LetTerm:
+	"let" symbol=ID "=" letvalue=Term "in" context=Term
+;
+
+BindTerm:
+	kind=("forall" | "exists") bound+=Bound ("," bound+=Bound)* "." term=Term
+;
+
+Bound:
+	name=ID (isColl?="[]")?
+;
+
+LogicTerm:
+	CompTerm ({LogicTerm.left=current} operator=("->" | "<->" | "||" | "&&") right=Term)?
+;
+
+CompTerm:
+	AddTerm ({CompTerm.left=current} operator=("==" | "!=" | "<" | "<=" | ">" | ">=") right=AddTerm)?
+;
+
+AddTerm:
+	ProdTerm ({AddTerm.left=current} operator=("+" | "-") right=ProdTerm)?
+;
+
+ProdTerm:
+	PrimaryTerm ({ProdTerm.left=current} operator=("*" | "/" | "%") right=PrimaryTerm)?
+;
+
+PrimaryTerm:
+	MinusTerm | NotTerm | QuarkTerm
+;
+
+MinusTerm:
+	"-" term=QuarkTerm
+;
+
+NotTerm:
+	"!" term=QuarkTerm
+;
+
+QuarkTerm:
+	TermVar | BoolLiteralTerm | IntLiteralTerm
+  | OldTerm | AtTerm | ParenTerm | CallTerm
+;
+
+ParenTerm:
+	"(" term=Term ")"
+;
+
+TermVar:
+	var=ID ("[" index=Term ("<-" value=Term)?"]")?
+;
+
+BoolLiteralTerm:
+	(isTrue?="true") | {BoolLiteralTerm} "false"
+;
+
+IntLiteralTerm:
+	intvalue=INT
+;
+
+OldTerm:
+	"old" "(" term=Term ")"
+;
+
+AtTerm:
+	"at" "(" term=Term "," label=ID ")"
+;
+
+CallTerm:
+	called=ID "(" (params+=Term ("," params+=Term)*)? ")"
+;
+
+terminal ID: '^'?('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*;
+terminal INT returns ecore::EInt: ('0'..'9')+;
+terminal STRING:
+			'"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"' |
+			"'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") )* "'"
+		;
+terminal ML_COMMENT : '/*' -> '*/';
+terminal SL_COMMENT: '//' ('\r'? '\n' | !('@' | '\r' | '\n') !('\n'|'\r')* ('\r'? '\n')?);
+/*terminal SL_COMMENT : '//[^@]?' !('\n'|'\r')* ('\r'? '\n')?;*/
+
+terminal WS         : (' '|'\t'|'\r'|'\n')+;
+
+terminal ANY_OTHER: .;
+

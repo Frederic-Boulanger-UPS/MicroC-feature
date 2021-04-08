@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+	<extension point="org.eclipse.emf.ecore.generated_package">
+		<package
+			uri = "http://www.cs.fr/info/sl/microc/MicroC"
+			class = "fr.cs.info.sl.microc.microC.MicroCPackage"
+			genModel = "model/generated/MicroC.genmodel" />
+	</extension>
+</plugin>

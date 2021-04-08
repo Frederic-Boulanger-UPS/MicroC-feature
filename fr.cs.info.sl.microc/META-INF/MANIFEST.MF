@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: fr.cs.info.sl.microc
+Bundle-ManifestVersion: 2
+Bundle-Name: fr.cs.info.sl.microc
+Bundle-Vendor: CentraleSupélec, Frédéric Boulanger
+Bundle-Version: 1.0.0.qualifier
+Bundle-SymbolicName: fr.cs.info.sl.microc; singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.xtext,
+ org.eclipse.xtext.xbase,
+ org.eclipse.equinox.common;bundle-version="3.5.0",
+ org.eclipse.emf.ecore,
+ org.eclipse.xtext.xbase.lib;bundle-version="2.14.0",
+ org.eclipse.xtext.util,
+ org.eclipse.emf.common,
+ org.antlr.runtime;bundle-version="3.2.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: fr.cs.info.sl.microc,
+ fr.cs.info.sl.microc.services,
+ fr.cs.info.sl.microc.microC,
+ fr.cs.info.sl.microc.validation,
+ fr.cs.info.sl.microc.parser.antlr.internal,
+ fr.cs.info.sl.microc.generator,
+ fr.cs.info.sl.microc.microC.impl,
+ fr.cs.info.sl.microc.serializer,
+ fr.cs.info.sl.microc.microC.util,
+ fr.cs.info.sl.microc.parser.antlr,
+ fr.cs.info.sl.microc.scoping
+Import-Package: org.apache.log4j

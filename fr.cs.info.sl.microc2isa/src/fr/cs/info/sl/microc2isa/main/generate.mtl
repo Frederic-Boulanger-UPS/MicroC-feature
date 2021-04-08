@@ -1,0 +1,329 @@
+[comment encoding = UTF-8 /]
+[module generate('http://www.cs.fr/info/sl/microc/MicroC')]
+
+[comment Terms in the logics parts of a Micro-C file. /]
+[template private genLogParams(params: OrderedSet(Param))]
+[for (p: Param | params) separator (' ')]([p.name/]::int)[/for]
+[/template]
+
+[template private genCallParams(params: OrderedSet(Term))]
+[for (p: Term | params) separator (' ')][p.generateTerm(false)/][/for]
+[/template]
+
+[comment Universal quantifiers at the root of a lemma can be removed: "\<forall> a b. P a b" become "P ab"/]
+[template private generateRootTerm(t: Term)]
+[t.generateTerm(true)/]
+[/template]
+
+[template private generateRootTerm(bt: BindTerm)]
+[if (bt.kind = 'forall')][bt.term.generateRootTerm()/][else][bt.generateTerm(true)/][/if]
+[/template]
+
+[comment Root implications after a universal quantifier (transformed into schematic variable) become meta-implications/]
+[template private generateRootTerm(lop: LogicTerm)]
+[if (lop.operator = '->')][lop.left.generateTerm(false)/] \<Longrightarrow> [lop.right.generateTerm(false)/][else][lop.generateTerm(true)/][/if]
+[/template]
+
+[template private generateTerm(t: Term, top: Boolean)](* Error: processing abstract Term*)[/template]
+
+[template private generateTerm(ifte: IfThenElseTerm, top: Boolean)]
+(if [ifte.condition.generateTerm(true)/]
+ then
+   [ifte.truebranch.generateTerm(true)/]
+ else
+   [ifte.falsebranch.generateTerm(true)/]
+)
+[/template]
+
+[template private generateTerm(lt: LetTerm, top: Boolean)]
+(let [lt.symbol/] = [lt.letvalue.generateTerm(true)/] in
+  [lt._context.generateTerm(false)/]
+)
+[/template]
+
+[template private generateTerm(bt: BindTerm, top: Boolean)]
+[if (not top)]([bt.generateTerm(true)/])[else][if (bt.kind = 'forall')]\<forall>[else]\<exists>[/if][for (b : Bound | bt.bound) separator (' ')][b.name/][/for]. [bt.term.generateTerm(true)/][/if]
+[/template]
+
+[template private generateTerm(lop: LogicTerm, top: Boolean)]
+[if not top]([lop.generateTerm(true)/])[else][lop.left.generateTerm(false)/] [if (lop.operator = '->')]\<longrightarrow>[elseif (lop.operator = '<->')]=[elseif (lop.operator='||')]\<or>[else]\<and>[/if] [lop.right.generateTerm(false)/][/if]
+[/template]
+
+[template private generateTerm(cop: CompTerm, top: Boolean)]
+[if not top]([cop.generateTerm(true)/])[else]
+[cop.left.generateTerm(false)/] [if (cop.operator = '==')]=[elseif (cop.operator = '!=')]\<neq>[else][cop.operator/][/if] [cop.right.generateTerm(false)/][/if]
+[/template]
+
+[template private generateTerm(adt: AddTerm, top: Boolean)]
+[if (not top)]([adt.generateTerm(true)/])[else][adt.left.generateTerm(false)/] [adt.operator/] [adt.right.generateTerm(false)/][/if]
+[/template]
+
+[template private generateTerm(pdt: ProdTerm, top: Boolean)]
+[if (not top)]([pdt.generateTerm(true)/])[else][pdt.left.generateTerm(false)/] [pdt.operator/] [pdt.right.generateTerm(false)/][/if]
+[/template]
+
+[template private generateTerm(pt: PrimaryTerm, top: Boolean)]
+(* Error: processing abstract PrimaryTerm *)
+[/template]
+
+[template private generateTerm(mt: MinusTerm, top: Boolean)]
+[if not top]([mt.generateTerm(true)/])[else]- [mt.term.generateTerm(false)/][/if]
+[/template]
+
+[template private generateTerm(nt: NotTerm, top: Boolean)]
+[if not top]([nt.generateTerm(true)/])[else]\<not> [nt.term.generateTerm(false)/][/if]
+[/template]
+
+[template private generateTerm(pt: ParenTerm, top: Boolean)]([pt.term.generateTerm(true)/])[/template]
+
+[template private generateTerm(qt: QuarkTerm, top: Boolean)]
+(* Error: processing abstract QuarkTerm *)
+[/template]
+
+[template private generateTerm(tv: TermVar, top: Boolean)][tv.var/][/template]
+
+[template private generateTerm(bl: BoolLiteralTerm, top: Boolean)][if (bl.isTrue)]True[else]False[/if][/template]
+
+[template private generateTerm(il: IntLiteralTerm, top: Boolean)][il.intvalue/][/template]
+
+[template private generateTerm(ot: OldTerm, top: Boolean)]
+old([ot.term.generateTerm(true)/])[/template]
+
+[template private generateTerm(at: AtTerm, top: Boolean)]
+at([at.term.generateTerm(true)/], [at.label/])[/template]
+
+[template private generateTerm(ct: CallTerm, top: Boolean)][if (not top)]([ct.generateTerm(true)/])[else][ct.called/] [ct.params->genCallParams()/][/if][/template]
+
+[comment Elements of a Micro-C file. /]
+[template private generateElement(decl: Decl)](* Error: processing abstract Decl*)[/template]
+
+[template private generateElement(include: C_include)]
+(* #include <[include.fileName/]> *)
+[/template]
+
+[template private generateSpec(spec: Spec)]
+/!\ Error: processing abstract Spec /!\
+[/template]
+
+[template private generateSpec(req: Requires)]
+requires [req.term.generateTerm(true)/]
+[/template]
+
+[template private generateSpec(ens: Ensures)]
+ensures [ens.term.generateTerm(true)/]
+[/template]
+
+[template private generateSpec(var: Variant)]
+variant [for (v : Term | var.terms) separator (',\n')][v.generateTerm(true)/][/for]
+[/template]
+
+[comment C Statements and expressions/]
+[template private generateExpr(e: Expr, top: Boolean)]
+/* Error: processing abstract Expr */
+[/template]
+
+[template private generateExpr(bl: BinLog, top: Boolean)]
+[if (not top)]([bl.generateExpr(true)/])[else][bl.left.generateExpr(false)/] [bl.operator/] [bl.right.generateExpr(false)/][/if]
+[/template]
+
+[template private generateExpr(bc: BinComp, top: Boolean)]
+[if (not top)]([bc.generateExpr(true)/])[else][bc.left.generateExpr(false)/] [bc.operator/] [bc.right.generateExpr(false)/][/if]
+[/template]
+
+[template private generateExpr(ba: BinAdd, top: Boolean)]
+[if (not top)]([ba.generateExpr(true)/])[else][ba.left.generateExpr(false)/] [ba.operator/] [ba.right.generateExpr(false)/][/if]
+[/template]
+
+[template private generateExpr(bp: BinProd, top: Boolean)]
+[if (not top)]([bp.generateExpr(true)/])[else][bp.left.generateExpr(false)/] [bp.operator/] [bp.right.generateExpr(false)/][/if]
+[/template]
+
+[template private generateExpr(mn: Minus, top: Boolean)]
+[if (not top)]([mn.generateExpr(true)/])[else]-[mn.expr.generateExpr(false)/][/if] 
+[/template]
+
+[template private generateExpr(nt: Not, top: Boolean)]
+[if (not top)]([nt.generateExpr(true)/])[else]![nt.expr.generateExpr(false)/][/if]
+[/template]
+
+[template private generateExpr(il: IntLiteral, top: Boolean)]
+[il.intvalue/]
+[/template]
+
+[template private generateExpr(sl: StringLiteral, top: Boolean)]
+"[sl.string/]"
+[/template]
+
+[template private generateExpr(vr: VarRef, top: Boolean)]
+[vr.name/][if (not vr.index.oclIsUndefined())]['['/][vr.index.generateExpr(true)/][']'/][/if]
+[/template]
+
+[template private generateExpr(fc: FunCall, top: Boolean)]
+[fc.name/]([for (p : Expr | fc.params) separator (', ')][p.generateExpr(true)/])[/for]
+[/template]
+
+[template private generateExpr(sc: Scanf, top: Boolean)]
+scanf("%d", &[sc.variable/])
+[/template]
+
+[template private generateExpr(pe: ParenExpr, top: Boolean)]
+([pe.expr.generateExpr(true)/])
+[/template]
+
+[template private generateStatement(st: Statement, noblock: Boolean)]
+// Error: processing abstract Statement /!\
+[/template]
+
+[template private generateStatement(nop: Nop, noblock: Boolean)]
+;
+[/template]
+
+[template private generateStatement(ret: Return, noblock: Boolean)]
+return [ret.expression.generateExpr(true)/];
+[/template]
+
+[template private generateStatement(vd: VarDecl, noblock: Boolean)]
+int [vd.name/][if (vd.isArray)]['['/][vd.size.generateExpr(true)/][']'/][/if];
+[/template]
+
+[template private generateStatement(br: Break, noblock: Boolean)]
+break;
+[/template]
+
+[template private generateStatement(eas: ExprAsStatement, noblock: Boolean)]
+[eas.statement.generateStatement(false)/];
+[/template]
+
+[template private generateStatement(es: ExprStatement, noblock: Boolean)]
+/* Error: processing abstract ExprStatement */
+[/template]
+
+[template private generateStatement(vi: VarInit, noblock: Boolean)]
+int [vi.name/] = [vi.initvalue.generateExpr(true)/][/template]
+
+[template private generateStatement(va: VarAssign, noblock: Boolean)]
+[if (not va._pre.oclIsUndefined())][va._pre/][/if][va.var.generateExpr(false)/][if (va._post.oclIsUndefined())] [va.operator/] [va.assignedvalue.generateExpr(true)/][else][va._post/][/if][/template]
+
+[template private generateStatement(fc: FunCall, noblock: Boolean)]
+[fc.name/]([for (p : Expr | fc.params) separator (', ')][p.generateExpr(true)/][/for])[/template]
+
+[template private generateStatement(sc: Scanf, noblock: Boolean)]
+scanf("%d", &[sc.variable/])[/template]
+
+[template private generateStatement(l: Label, noblock: Boolean)]
+//@ label [l.name/] ;
+[/template]
+
+[template private generateStatement(ast: Assert, noblock: Boolean)]
+//@ assert [ast.term.generateTerm(true)/] ;
+[/template]
+
+[template private generateStatement(asm: Assume, noblock: Boolean)]
+//@ assume [asm.term.generateTerm(true)/] ;
+[/template]
+
+[template private generateStatement(chk: Check, noblock: Boolean)]
+//@ check [chk.term.generateTerm(true)/] ;
+[/template]
+
+[template private generateStatement(ifte: IfThenElse, noblock: Boolean)]
+if ([ifte.condition.generateExpr(true)/]) {
+  [ifte.truebranch.generateStatement(true)/]
+}[if (not ifte.falsebranch.oclIsUndefined())] else {
+  [ifte.falsebranch.generateStatement(true)/]
+}[/if][/template]
+
+[template private generateAnnotation(la: LoopAnnot)]
+// Error: processing abstract LoopAnnot
+[/template]
+
+[template private generateAnnotation(iv: Invariant)]
+invariant [iv.term.generateTerm(true)/]
+[/template]
+
+[template private generateAnnotation(v: Variant)]
+[v.generateSpec()/]
+[/template]
+
+[template private generateBody(b: LoopBody)]
+[for (annot : LoopAnnot | b.annotations)]
+  //@ [annot.generateAnnotation()/];
+[/for]
+[for (st : Statement | b.statements)]
+  [st.generateStatement(false)/][/for][/template]
+
+[template private generateStatement(wh: While, noblock: Boolean)]
+while ([wh.condition.generateExpr(true)/]) {
+[wh._body.generateBody()/]
+}
+[/template]
+
+[template private generateStatement(fr: For, noblock: Boolean)]
+for ([if (not fr._init.oclIsUndefined())][fr._init.generateStatement(false)/][/if]; [if (not fr.condition.oclIsUndefined())][fr.condition.generateExpr(true)/][/if]; [if (not fr.postaction.oclIsUndefined())][fr.postaction.generateStatement(false)/][/if]) {
+[fr._body.generateBody()/]
+}
+[/template]
+
+[template private generateStatement(blk: Block, noblock: Boolean)]
+[if (not noblock)]{[blk.generateStatement(true)/]}[else]
+  [for (st : Statement | blk.statements) separator ('\n')]
+  [st.generateStatement(false)/][/for][/if][/template]
+
+[template private generateElement(function: C_function)]
+(*
+  [function.type.name/] [function.name/] ([for (p : Param | function.params) separator (', ')]int [p.name/][if (p.isArray)]['[]'/][/if][/for]) {
+  [for (spec : Spec | function.specs)]
+    //@ [spec.generateSpec()/] ;
+  [/for]
+  [for (st : Statement | function._body)]
+    [st.generateStatement(false)/]
+  [/for]
+  }
+*)
+[/template]
+
+[template private generateElement(logic: LogicFunctionDecl)]
+definition \<open>[logic.name/] [logic.params->genLogParams()/] \<equiv>
+  [logic.definition.generateTerm(true)/]
+\<close>
+[/template]
+
+[template private generateElement(predicate: PredicateDecl)]
+definition \<open>[predicate.name/] [predicate.params->genLogParams()/] \<equiv>
+  [predicate.definition.generateTerm(true)/]
+\<close>
+[/template]
+
+[template private generateElement(axiom: Axiom)]
+axiomatization where [axiom.name/]: \<open>
+  [axiom.term.generateTerm(true)/]
+\<close>
+[/template]
+
+[template private generateElement(lemma: Lemma)]
+lemma [lemma.name/]: \<open>
+  [lemma.term.generateRootTerm()/]
+\<close> sorry
+[/template]
+
+[template private generateElement(goal: Goal)]
+(* Error: don't kown how to process goal [goal.name/]
+  [goal.term.generateTerm(true)/]
+*)
+[/template]
+
+[template public generateElement(aModel : Model)]
+[comment @main/]
+[let modName : String = aModel.decls->selectByKind(C_function)->at(1).name]
+[file (modName.concat('.thy'), false, 'UTF-8')]
+theory [modName/]
+  imports Main
+begin
+[for (decl : Decl | aModel.decls)]
+	[decl.generateElement()/]
+
+[/for]
+end
+[/file]
+[/let]
+[/template]

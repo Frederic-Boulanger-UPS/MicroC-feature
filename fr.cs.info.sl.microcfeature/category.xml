@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature id="fr.cs.info.sl.microcfeature">
+      <category name="Modeling"/>
+   </feature>
+   <bundle id="fr.cs.info.sl.microc">
+      <category name="Modeling"/>
+   </bundle>
+   <bundle id="fr.cs.info.sl.microc.ide">
+      <category name="Modeling"/>
+   </bundle>
+   <bundle id="fr.cs.info.sl.microc.tests">
+      <category name="Modeling"/>
+   </bundle>
+   <bundle id="fr.cs.info.sl.microc.ui">
+      <category name="Modeling"/>
+   </bundle>
+   <bundle id="fr.cs.info.sl.microc.ui.tests">
+      <category name="Modeling"/>
+   </bundle>
+   <bundle id="fr.cs.info.sl.microc2isa">
+      <category name="Modeling"/>
+   </bundle>
+   <bundle id="fr.cs.info.sl.microc2isa.ui" version="1.0.0">
+      <category name="Modeling"/>
+   </bundle>
+   <category-def name="Modeling" label="Modeling"/>
+</site>
