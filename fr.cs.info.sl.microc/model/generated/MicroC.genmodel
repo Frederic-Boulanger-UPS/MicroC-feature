@@ -112,14 +112,24 @@
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference MicroC.ecore#//Invariant/term"/>
     </genClasses>
     <genClasses ecoreClass="MicroC.ecore#//Expr"/>
-    <genClasses ecoreClass="MicroC.ecore#//BinLog">
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference MicroC.ecore#//BinLog/left"/>
-      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute MicroC.ecore#//BinLog/operator"/>
-      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference MicroC.ecore#//BinLog/right"/>
+    <genClasses ecoreClass="MicroC.ecore#//BinLogDisj">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference MicroC.ecore#//BinLogDisj/left"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference MicroC.ecore#//BinLogDisj/right"/>
     </genClasses>
-    <genClasses ecoreClass="MicroC.ecore#//BinComp"/>
+    <genClasses ecoreClass="MicroC.ecore#//BinLogConj"/>
+    <genClasses ecoreClass="MicroC.ecore#//BinComp">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute MicroC.ecore#//BinComp/operator"/>
+    </genClasses>
     <genClasses ecoreClass="MicroC.ecore#//BinAdd"/>
+    <genClasses ecoreClass="MicroC.ecore#//BinAddMore">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute MicroC.ecore#//BinAddMore/operator"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference MicroC.ecore#//BinAddMore/arg"/>
+    </genClasses>
     <genClasses ecoreClass="MicroC.ecore#//BinProd"/>
+    <genClasses ecoreClass="MicroC.ecore#//BinProdMore">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute MicroC.ecore#//BinProdMore/operator"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference MicroC.ecore#//BinProdMore/arg"/>
+    </genClasses>
     <genClasses ecoreClass="MicroC.ecore#//Primary"/>
     <genClasses ecoreClass="MicroC.ecore#//Minus">
       <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference MicroC.ecore#//Minus/expr"/>

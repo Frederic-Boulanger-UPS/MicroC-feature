@@ -11,12 +11,12 @@ Decl:
 ;
 
 C_include:
-	"#include" "<" fileName=STRING ">"
+	"#include" fileName=INCLUDEDFILE
 ;
 
 C_function:
 	type=ReturnType name=ID "(" (params+=Param ("," params+=Param)*)? ")"
-	'{' specs+=Spec* body+=Statement* '}'
+	('{' specs+=Spec* body+=Statement* '}' | ';')
 ;
 
 ReturnType:
@@ -165,27 +165,38 @@ Invariant:
 ;
 
 Expr:
-	BinLog
+	BinLogDisj
 ;
 
-BinLog:
-	BinComp
-	({BinLog.left=current} operator=("&&" | "||") right=BinComp)?
+BinLogDisj:
+	BinLogConj ({BinLogDisj.left=current} ("||" right+=BinLogConj)+)?
+;
+
+BinLogConj:
+	BinComp ({BinLogConj.left=current} ("&&" right+=BinComp)+)?
 ;
 
 BinComp:
 	BinAdd
-	({BinComp.left=current} operator=("==" | "!=" | "<" | "<=" | ">" | ">=") right=BinAdd)?
+	({BinComp.left=current} operator=("==" | "!=" | "<" | "<=" | ">" | ">=") right+=BinAdd)?
 ;
 
 BinAdd:
 	BinProd
-	({BinAdd.left=current} operator=("+" | "-") right=BinProd)?
+	({BinAdd.left=current} (right+=BinAddMore)+)?
+;
+
+BinAddMore:
+	operator=("+" | "-") arg=BinProd
 ;
 
 BinProd:
 	Primary
-	({BinProd.left=current} operator=("*" | "/" | "%") right=Primary)?
+	({BinProd.left=current} (right+=BinProdMore)+)?
+;
+
+BinProdMore:
+	operator=("*" | "/" | "%") arg=Primary
 ;
 
 Primary:
@@ -336,9 +347,9 @@ terminal STRING:
 			'"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"' |
 			"'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") )* "'"
 		;
+terminal INCLUDEDFILE: '<' (!(' '|'"'|"'"|'<'|'>'))+ '>';
 terminal ML_COMMENT : '/*' -> '*/';
 terminal SL_COMMENT: '//' ('\r'? '\n' | !('@' | '\r' | '\n') !('\n'|'\r')* ('\r'? '\n')?);
-/*terminal SL_COMMENT : '//[^@]?' !('\n'|'\r')* ('\r'? '\n')?;*/
 
 terminal WS         : (' '|'\t'|'\r'|'\n')+;
 

@@ -51,7 +51,7 @@
 
 [template private generateTerm(cop: CompTerm, top: Boolean)]
 [if not top]([cop.generateTerm(true)/])[else]
-[cop.left.generateTerm(false)/] [if (cop.operator = '==')]=[elseif (cop.operator = '!=')]\<neq>[else][cop.operator/][/if] [cop.right.generateTerm(false)/][/if]
+[cop.left.generateTerm(false)/] [if (cop.operator = '==')]=[elseif (cop.operator = '!=')]\<noteq>[elseif (cop.operator = '<=')]\<le>[elseif (cop.operator = '>=')]\<ge>[else][cop.operator/][/if] [cop.right.generateTerm(false)/][/if]
 [/template]
 
 [template private generateTerm(adt: AddTerm, top: Boolean)]
@@ -122,20 +122,24 @@ variant [for (v : Term | var.terms) separator (',\n')][v.generateTerm(true)/][/f
 /* Error: processing abstract Expr */
 [/template]
 
-[template private generateExpr(bl: BinLog, top: Boolean)]
-[if (not top)]([bl.generateExpr(true)/])[else][bl.left.generateExpr(false)/] [bl.operator/] [bl.right.generateExpr(false)/][/if]
+[template private generateExpr(bl: BinLogDisj, top: Boolean)]
+[if (not top)]([bl.generateExpr(true)/])[else][bl.left.generateExpr(false)/][for (arg : BinLogConj | bl.right)] || [arg.generateExpr(false)/][/for][/if]
+[/template]
+
+[template private generateExpr(bl: BinLogConj, top: Boolean)]
+[if (not top)]([bl.generateExpr(true)/])[else][bl.left.generateExpr(false)/][for (arg : BinComp | bl.right)] && [arg.generateExpr(false)/][/for][/if]
 [/template]
 
 [template private generateExpr(bc: BinComp, top: Boolean)]
-[if (not top)]([bc.generateExpr(true)/])[else][bc.left.generateExpr(false)/] [bc.operator/] [bc.right.generateExpr(false)/][/if]
+[if (not top)]([bc.generateExpr(true)/])[else][bc.left.generateExpr(false)/] [bc.operator/] [bc.right->first().oclAsType(BinAdd).generateExpr(false)/][/if]
 [/template]
 
 [template private generateExpr(ba: BinAdd, top: Boolean)]
-[if (not top)]([ba.generateExpr(true)/])[else][ba.left.generateExpr(false)/] [ba.operator/] [ba.right.generateExpr(false)/][/if]
+[if (not top)]([ba.generateExpr(true)/])[else][ba.left.generateExpr(false)/][for (more : BinAddMore | ba.right)] [more.operator/] [more.arg.generateExpr(false)/][/for][/if]
 [/template]
 
 [template private generateExpr(bp: BinProd, top: Boolean)]
-[if (not top)]([bp.generateExpr(true)/])[else][bp.left.generateExpr(false)/] [bp.operator/] [bp.right.generateExpr(false)/][/if]
+[if (not top)]([bp.generateExpr(true)/])[else][bp.left.generateExpr(false)/][for (more : BinProdMore | bp.right)] [more.operator/] [more.arg.generateExpr(false)/][/for][/if]
 [/template]
 
 [template private generateExpr(mn: Minus, top: Boolean)]
@@ -271,7 +275,7 @@ for ([if (not fr._init.oclIsUndefined())][fr._init.generateStatement(false)/][/i
 
 [template private generateElement(function: C_function)]
 (*
-  [function.type.name/] [function.name/] ([for (p : Param | function.params) separator (', ')]int [p.name/][if (p.isArray)]['[]'/][/if][/for]) {
+  [function.type.name/] [function.name/] ([for (p : Param | function.params) separator (', ')]int [p.name/][if (p.isArray)]['[]'/][/if][/for])[if (function._body->oclIsUndefined())];[else] {
   [for (spec : Spec | function.specs)]
     //@ [spec.generateSpec()/] ;
   [/for]
@@ -279,6 +283,7 @@ for ([if (not fr._init.oclIsUndefined())][fr._init.generateStatement(false)/][/i
     [st.generateStatement(false)/]
   [/for]
   }
+[/if]
 *)
 [/template]
 
